@@ -6,6 +6,7 @@ import com.hdjava.reggie.common.R;
 import com.hdjava.reggie.dto.DishDto;
 import com.hdjava.reggie.entity.Category;
 import com.hdjava.reggie.entity.Dish;
+import com.hdjava.reggie.entity.DishFlavor;
 import com.hdjava.reggie.service.CategoryService;
 import com.hdjava.reggie.service.DisService;
 import com.hdjava.reggie.service.DishFlavorService;
@@ -124,7 +125,7 @@ public class DishController {
 
 
     @GetMapping("/list")
-    public R<List<Dish>> list(Dish dish){
+    public R<List<DishDto>> list(Dish dish){
 
         //构造查询条件
         LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
@@ -134,7 +135,29 @@ public class DishController {
 
         List<Dish> list = disService.list(queryWrapper);
 
-        return R.success(list);
+        List<DishDto> dishDtoList = list.stream().map((item) -> {
+            DishDto dishDto = new DishDto();
+
+            BeanUtils.copyProperties(item,dishDto);
+
+            Long categoryId = item.getCategoryId();//分类id
+            //根据id查询分类对象
+            Category category = categoryService.getById(categoryId);
+
+            if(category != null){
+                String categoryName = category.getName();
+                dishDto.setCategoryName(categoryName);
+            }
+            Long dishId = item.getId();
+            LambdaQueryWrapper<DishFlavor> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+            lambdaQueryWrapper.eq(DishFlavor::getDishId,dishId);
+            //SQL:select * from dish_flavor where dish_di = ?
+            List<DishFlavor> dishFlavors = dishFlavorService.list(lambdaQueryWrapper);
+            dishDto.setFlavors(dishFlavors);
+            return dishDto;
+        }).collect(Collectors.toList());
+
+        return R.success(dishDtoList);
 
     }
 
