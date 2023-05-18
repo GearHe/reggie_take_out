@@ -14,6 +14,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -135,6 +136,23 @@ public class DishController {
 
         return R.success(list);
 
+    }
+
+    /**
+     * 修改菜品状态
+     * @param status
+     * @return
+     */
+    @PostMapping("/status/{status}")
+    public R<String> updateStatus(HttpServletRequest request, @PathVariable Integer status){
+        Long ids =Long.parseLong(request.getParameter("ids"));
+        log.info(status.toString());
+        log.info(ids.toString());
+        Dish dish = new Dish();
+        dish.setId(ids);
+        dish.setStatus(status);
+        disService.updateById(dish);
+        return R.success("状态修改成功");
     }
 
 
